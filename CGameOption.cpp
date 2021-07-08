@@ -32,8 +32,7 @@ CGameOption::~CGameOption() {
 		DeleteObject(m_hFont);
 }
 
-void CGameOption::UpdateWindowPos(HWND hWndParent)
-{
+void CGameOption::UpdateWindowPos(HWND hWndParent) {
 	RECT rcDesktop;
 	int w = 2*X+3*SPACE+5*W+15;
 	int h = 2*Y+H+36;
@@ -41,8 +40,7 @@ void CGameOption::UpdateWindowPos(HWND hWndParent)
 	SetWindowPos(hWndParent, NULL, (rcDesktop.right-w)/2, (rcDesktop.bottom-h)/2, w, h, SWP_NOZORDER);
 }
 
-BOOL CGameOption::CreateControls(HINSTANCE hInst, HWND hWndParent)
-{
+BOOL CGameOption::CreateControls(HINSTANCE hInst, HWND hWndParent) {
 	DWORD dwStyle = ES_CENTER | ES_NUMBER | WS_BORDER | WS_CHILD | WS_TABSTOP | WS_VISIBLE;
 	m_hEditWndWidth  = CreateWindowW(L"Edit", L"675", dwStyle, X, Y, W, H, hWndParent, NULL, hInst, NULL);
 	m_hEditWndHeight = CreateWindowW(L"Edit", L"360", dwStyle, X+W+SPACE, Y, W, H, hWndParent, NULL, hInst, NULL);
@@ -60,37 +58,31 @@ BOOL CGameOption::CreateControls(HINSTANCE hInst, HWND hWndParent)
 	return FALSE;
 }
 
-void CGameOption::Show(int nCmdShow)
-{
+void CGameOption::Show(int nCmdShow) {
 	ShowWindow(m_hEditWndWidth, nCmdShow);
 	ShowWindow(m_hEditWndHeight, nCmdShow);
 	ShowWindow(m_hEditCellSize, nCmdShow);
 	ShowWindow(m_hButtonNext, nCmdShow);
 }
 
-BOOL CGameOption::IsHide()
-{
+BOOL CGameOption::IsHide() {
 	return !IsWindowVisible(m_hButtonNext);
 }
 
-int GetNumber(HWND hEdit)
-{
+int GetNumber(HWND hEdit) {
 	WCHAR szText[16];
 	GetWindowTextW(hEdit, szText, 16);
 	return _wtoi(szText);
 }
 
-UINT CGameOption::GetWindowWidth()
-{
+UINT CGameOption::GetWindowWidth() {
 	return (UINT)GetNumber(m_hEditWndWidth);
 }
 
-UINT CGameOption::GetWindowHeight()
-{
+UINT CGameOption::GetWindowHeight() {
 	return (UINT)GetNumber(m_hEditWndHeight);
 }
 
-UINT CGameOption::GetCellSize()
-{
+UINT CGameOption::GetCellSize() {
 	return (UINT)GetNumber(m_hEditCellSize);
 }

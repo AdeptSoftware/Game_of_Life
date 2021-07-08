@@ -254,17 +254,9 @@ BOOL CGame::Save() {
 	}
 
 	EnterCriticalSection(&m_data.thread.critsection);
-	HBITMAP hBitmap = (HBITMAP)GetCurrentObject(m_data.p.hDC, OBJ_BITMAP);
-	if (hBitmap) {
-		HDC hDC = GetDC(m_data.p.hWnd);
-		int nResult = CreateBMPFile(L"screenshot.bmp", hBitmap, hDC);
-		ReleaseDC(m_data.p.hWnd, hDC);
-		LeaveCriticalSection(&m_data.thread.critsection);
-		return (nResult == 0);
-	}
+	int nResult = SaveBitmapFromHDC(m_data.p.hDC, L"screenshot.bmp");
 	LeaveCriticalSection(&m_data.thread.critsection);
-	MessageBoxW(NULL, L"Отсутствуют данные для записи!", L"Ошибка", MB_OK);
-	return FALSE;
+	return (nResult == 0);
 }
 
 void CGame::Stop()

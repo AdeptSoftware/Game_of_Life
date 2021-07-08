@@ -18,7 +18,6 @@
 #define ID_GAME_GRIDMODE                32774
 #define ID_GAME_ZOOM                    32775
 #define ID_GAME_RESTART                 32776
-#define ID_GAME_PAUSE2                  32778
 #define ID_GAME_OFFSET_LEFT             32781
 #define ID_GAME_OFFSET_UP               32782
 #define ID_GAME_OFFSET_RIGHT            32783
@@ -33,7 +32,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32789
+#define _APS_NEXT_COMMAND_VALUE         32791
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

@@ -29,8 +29,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_opt_ HINSTANCE hPrevInstance,
                       _In_ LPWSTR    lpCmdLine,
-                      _In_ int       nCmdShow)
-{
+                      _In_ int       nCmdShow) {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
@@ -45,10 +44,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_GAME_ACCEL));
 
     MSG msg;
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {// Цикл основного сообщения
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
+    while (GetMessage(&msg, nullptr, 0, 0)) { // Цикл основного сообщения
+        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
@@ -57,8 +54,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 }
 
 
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
+ATOM MyRegisterClass(HINSTANCE hInstance) {
     WNDCLASSEXW wcex;
     wcex.cbSize         = sizeof(WNDCLASSEX);
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
@@ -76,8 +72,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassExW(&wcex);
 }
 
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
    hInst = hInstance;
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW, 0, CW_USEDEFAULT, 0, CW_USEDEFAULT, nullptr, nullptr, hInstance, nullptr);
    if (!hWnd || !g_option.CreateControls(hInst, hWnd))
@@ -90,8 +85,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-void OnChangedSize(HWND hWnd, BOOL bCenterWindow)
-{
+void OnChangedSize(HWND hWnd, BOOL bCenterWindow) {
     UINT uOffset = 0;
     RECT rcBuffer, rcDesktop;
     g_game.CalcBufferRect(&rcBuffer);
@@ -111,8 +105,7 @@ void OnChangedSize(HWND hWnd, BOOL bCenterWindow)
         SetWindowPos(hWnd, NULL, 0, 0, rcBuffer.right+14, rcBuffer.bottom+37, SWP_NOMOVE | SWP_NOZORDER);
 }
 
-void OnNext(HWND hWnd)
-{
+void OnNext(HWND hWnd) {
     UINT w = g_option.GetWindowWidth();
     UINT h = g_option.GetWindowHeight();
     UINT a = g_option.GetCellSize();
@@ -152,8 +145,7 @@ BOOL OnCapturedMessage(HWND hWnd, UINT uMsg, LPARAM lParam) {
     return TRUE;
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     if (uMsg == WM_ENTERSIZEMOVE) {
         g_bLastPauseState = g_game.IsPause();
         g_game.Pause(TRUE);
@@ -176,12 +168,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         g_game.Draw(hWnd, hDC);
         EndPaint(hWnd, &ps);
     }
-    /*else if (uMsg == WM_COMMAND) {
+    else if (uMsg == WM_COMMAND) {
         int wmID = LOWORD(wParam);
         if (wmID == IDC_BUTTON_NEXT)
             OnNext(hWnd);
         else if (g_option.IsHide()) {
-            if (wmID == ID_GAME_PAUSE || wmID == ID_GAME_PAUSE2)
+            if (wmID == ID_GAME_PAUSE)
                 g_game.Pause(!g_game.IsPause());
             else if (wmID == ID_GAME_SLOW)
                 g_game.SetDelay(g_game.GetDelay() + 100);
@@ -212,7 +204,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         else
             return DefWindowProc(hWnd, uMsg, wParam, lParam);
-    }*/
+    }
     else if (uMsg == WM_MOUSEWHEEL) {
         int zDelta = GET_WHEEL_DELTA_WPARAM(wParam)/120;
         POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
