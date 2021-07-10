@@ -1,8 +1,7 @@
-﻿#include "framework.h"
+﻿#include "resource.h"
 #include "MemoryLeaks.h"    // Автоматическое отслеживание утечек памяти при Debug-конфигурации
 #include "CGameOption.h"
 #include "CGame.h"
-#include "Life.h"
 
 #include <windowsx.h>       // Функции: GET_X_LPARAM, GET_Y_LPARAM
 

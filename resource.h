@@ -1,12 +1,16 @@
-﻿//{{NO_DEPENDENCIES}}
-// Включаемый файл, созданный в Microsoft Visual C++.
-// Используется Life.rc
-//
+﻿#pragma once
+
+// При включении SDKDDKVer.h будет задана самая новая из доступных платформ Windows.
+// Если вы планируете сборку приложения для предыдущей версии платформы Windows, включите WinSDKVer.h и
+// задайте желаемую платформу в макросе _WIN32_WINNT, прежде чем включать SDKDDKVer.h.
+#include <SDKDDKVer.h>
+#include <windows.h>
+
 #define IDC_MYICON                      2
 #define IDD_LIFE_DIALOG                 102
 #define IDI_LIFE                        107
 #define IDI_SMALL                       108
-#define IDC_BUTTON_START                 127
+#define IDC_BUTTON_START                127
 #define IDR_MAINFRAME                   128
 #define IDC_ACCEL                       129
 #define IDR_GAME_ACCEL                  130
