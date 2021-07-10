@@ -1,5 +1,4 @@
-﻿#include <SDKDDKVer.h>
-#include "MemoryLeaks.h"    // Автоматическое отслеживание утечек памяти при Debug-конфигурации
+﻿#include "MemoryLeaks.h"
 #include "CGameOption.h"
 #include "resource.h"
 #include "CGame.h"
