@@ -1,5 +1,4 @@
-﻿#include "MemoryLeaks.h"
-#include "CGameOption.h"
+﻿#include "CGameOption.h"
 #include "resource.h"
 #include "CGame.h"
 

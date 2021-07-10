@@ -24,16 +24,10 @@
     <ClInclude Include="CGame.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Debug.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
     <ClInclude Include="BitmapSaver.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="MemoryLeaks.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

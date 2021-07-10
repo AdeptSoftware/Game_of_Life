@@ -1,5 +1,4 @@
 #include "CGame.h"
-#include "Debug.h"
 #include "BitmapSaver.h"
 #include <random>
 
@@ -96,7 +95,6 @@ void CGame::InvertState(int nPos) {
 }
 
 UINT CGame::Cursor2Pos(LPPOINT lppt) {
-	//OutputDebug(L"mouse: %i;%i\toffset: %.2f;%.2f\trc: %i;%i\n", lppt->x, lppt->y, m_ptOffset.x, m_ptOffset.y, m_data.p.rc.right, m_data.p.rc.bottom);
 	if (!m_data.nCellSize)
 		return 0;
 	int nGrid = (m_data.uGridMode ? g_nGridWidth : 0);

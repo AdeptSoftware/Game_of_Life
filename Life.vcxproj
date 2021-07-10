@@ -142,8 +142,6 @@
     <ClInclude Include="BitmapSaver.h" />
     <ClInclude Include="CGame.h" />
     <ClInclude Include="CGameOption.h" />
-    <ClInclude Include="Debug.h" />
-    <ClInclude Include="MemoryLeaks.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
