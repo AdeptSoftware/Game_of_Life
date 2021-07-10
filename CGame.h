@@ -60,6 +60,7 @@ public:
 	void Stop();
 
 	BOOL IsPause();
+	BOOL IsDefaultOffset();			// Смещения поля нет?
 
 	int  GetDelay();
 	UINT GetGridMode();

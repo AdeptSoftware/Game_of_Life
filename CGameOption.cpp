@@ -39,9 +39,12 @@ CGameOption::~CGameOption() {
 
 // Установка размеров окна по размеру всех ЭУ
 void CGameOption::UpdateWindowPos(HWND hWndParent) {
-	RECT rcDesktop;
-	int w = 2*g_x+3*g_gap+5*g_w+15;
-	int h = 2*g_y+g_h+36;
+	RECT rcDesktop, rcTemp{0};
+	// Размер c границами, заголовком и прочим
+	AdjustWindowRect(&rcTemp, GetWindowLongPtr(hWndParent, GWL_STYLE), FALSE);
+
+	int w = 2*g_x+3*g_gap+5*g_w+(rcTemp.right-rcTemp.left);
+	int h = 2*g_y+g_h+(rcTemp.bottom-rcTemp.top);
 	GetClientRect(GetDesktopWindow(), &rcDesktop);
 	SetWindowPos(hWndParent, nullptr, (rcDesktop.right-w)/2, (rcDesktop.bottom-h)/2, w, h, SWP_NOZORDER);
 }

@@ -66,23 +66,33 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInst, _In_opt_ HINSTANCE hPrevInstance, _I
 
 void OnChangedSize(HWND hWnd, BOOL bCenterWindow) {
     UINT uOffset = 0;
-    RECT rcBuffer, rcDesktop;
+    RECT rcBuffer, rcTemp{0};
     g_game.CalcBufferRect(&rcBuffer);
-    
+
+    // Размер c границами, заголовком и прочим
+    AdjustWindowRect(&rcTemp, GetWindowLongPtr(hWnd, GWL_STYLE), FALSE);
+    int dw = rcTemp.right-rcTemp.left;
+    int dh = rcTemp.bottom-rcTemp.top;
+
     // Ограничим размеры окна, чтобы не вышло за пределы экрана
-    GetClientRect(GetDesktopWindow(), &rcDesktop);
-    if (rcDesktop.right < rcBuffer.right)
-        rcBuffer.right = rcDesktop.right;
-    if (rcDesktop.bottom < rcBuffer.bottom-32)
-        rcBuffer.bottom = rcDesktop.bottom-32;
+    GetClientRect(GetDesktopWindow(), &rcTemp);
+    if (rcTemp.right < rcBuffer.right)
+        rcBuffer.right = rcTemp.right;
+    if (rcTemp.bottom < rcBuffer.bottom)
+        rcBuffer.bottom = rcTemp.bottom;
+
+    if (rcBuffer.right < 120) {       // 120 (без рамки) получено опытным путём (мин. допустимый размер окна по X)
+        if (g_game.IsDefaultOffset()) // Необходимо выравнить сетку по центру
+            g_game.SetOffset((rcBuffer.right-120)/2, 0);
+    }
 
     if (bCenterWindow) {// Выставим окно по центру
-        int x = (rcDesktop.right-rcBuffer.right-16)/2;
-        int y = (rcDesktop.bottom-rcBuffer.bottom-32)/2;
-        SetWindowPos(hWnd, nullptr, x, y, rcBuffer.right+14, rcBuffer.bottom+37, SWP_NOZORDER);
+        int x = (rcTemp.right-rcBuffer.right)/2;
+        int y = (rcTemp.bottom-rcBuffer.bottom)/2;
+        SetWindowPos(hWnd, nullptr, x, y, rcBuffer.right+dw, rcBuffer.bottom+dh, SWP_NOZORDER);
     }
     else
-        SetWindowPos(hWnd, nullptr, 0, 0, rcBuffer.right+14, rcBuffer.bottom+37, SWP_NOMOVE | SWP_NOZORDER);
+        SetWindowPos(hWnd, nullptr, 0, 0, rcBuffer.right+dw, rcBuffer.bottom+dh, SWP_NOMOVE | SWP_NOZORDER);
 }
 
 void OnOK(HWND hWnd) {
@@ -95,8 +105,8 @@ void OnOK(HWND hWnd) {
         g_game.UpdateBuffer();
 
         RECT rc;
-        GetClientRect(GetDesktopWindow(), &rc);
-        SetCursorPos((rc.right/2)-2, (rc.bottom/2)+13);
+        GetWindowRect(hWnd, &rc);
+        SetCursorPos(rc.left+(rc.right-rc.left)/2, rc.top+(rc.bottom-rc.top)/2);
     }
 }
 

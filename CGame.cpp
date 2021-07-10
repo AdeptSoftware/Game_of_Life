@@ -29,7 +29,7 @@ CGame::CGame() {
 	m_data.nCountRow		 = 0;
 	m_data.nCountColumn		 = 0;
 
-	m_ptOffset		    = { 0, 0 };
+	m_ptOffset		    = { 0.0f, 0.0f };
 	
 	m_data.p.hWnd	    = nullptr;
 	m_data.p.hDC	    = nullptr;
@@ -70,7 +70,7 @@ void CGame::Draw(HWND hWnd, HDC hWindowDC) {
 		HDC hDC = ::CreateBuffer(hWindowDC, nullptr, rcWindow.right, rcWindow.bottom);
 
 		FillRect(hDC, &rcWindow, m_data.brush.bkg);
-		BitBlt(hDC, 0, 0, rcWindow.right, rcWindow.bottom, m_data.p.hDC,
+		BitBlt(hDC, 1, 1, rcWindow.right, rcWindow.bottom, m_data.p.hDC,
 			   static_cast<int>(m_ptOffset.x), static_cast<int>(m_ptOffset.y), SRCCOPY);
 
 		::DeleteBuffer(hWindowDC, hDC, 0, 0, rcWindow.right, rcWindow.bottom);
@@ -226,6 +226,10 @@ UINT CGame::GetGridMode() { return m_data.uGridMode; }
 BOOL CGame::IsPause() { return m_data.thread.bPause; }
 int CGame::GetDelay() { return m_data.thread.nDelay; }
 int CGame::GetCellSize() { return m_data.nCellSize; }
+
+BOOL CGame::IsDefaultOffset() {
+	return (m_ptOffset.x == 0.0f && m_ptOffset.y == 0.0f);
+}
 
 void CGame::SetZoom(int nCellSize, int x, int y) {
 	if (nCellSize > 0) {
