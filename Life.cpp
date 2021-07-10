@@ -1,6 +1,7 @@
-﻿#include "resource.h"
+﻿#include <SDKDDKVer.h>
 #include "MemoryLeaks.h"    // Автоматическое отслеживание утечек памяти при Debug-конфигурации
 #include "CGameOption.h"
+#include "resource.h"
 #include "CGame.h"
 
 #include <windowsx.h>       // Функции: GET_X_LPARAM, GET_Y_LPARAM

@@ -1,11 +1,7 @@
-﻿#pragma once
-
-// При включении SDKDDKVer.h будет задана самая новая из доступных платформ Windows.
-// Если вы планируете сборку приложения для предыдущей версии платформы Windows, включите WinSDKVer.h и
-// задайте желаемую платформу в макросе _WIN32_WINNT, прежде чем включать SDKDDKVer.h.
-#include <SDKDDKVer.h>
-#include <windows.h>
-
+﻿//{{NO_DEPENDENCIES}}
+// Включаемый файл, созданный в Microsoft Visual C++.
+// Используется Life.rc
+//
 #define IDC_MYICON                      2
 #define IDD_LIFE_DIALOG                 102
 #define IDI_LIFE                        107
@@ -34,7 +30,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32791
+#define _APS_NEXT_COMMAND_VALUE         32794
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
