@@ -2,13 +2,15 @@
 #include "Debug.h"
 #include "BitmapSaver.h"
 #include <random>
-#define OFFSET				   2
-#define GRID_WIDTH			   1
+
+// Константы отображения сетки
+const int g_nOffset	   = 2;	// Отступ сетки от края
+const int g_nGridWidth = 1;
 
 DWORD WINAPI ThreadProc(LPVOID lpParam);
 inline void UpdateBitmap(THREADDATA* pData);
 
-void CGame::Update(BOOL bErase) {
+void CGame::Invalidate(BOOL bErase) {
 	EnterCriticalSection(&m_data.thread.critsection);
 
 	UpdateBitmap(&m_data);
@@ -20,27 +22,26 @@ void CGame::Update(BOOL bErase) {
 CGame::CGame() {
 	m_data.thread.nDelay	 = 0;
 	m_data.thread.dwThreadID = 0;
-	m_data.thread.hThread	 = NULL;
+	m_data.thread.hThread	 = nullptr;
 	m_data.thread.bPause	 = FALSE;
 
 	m_data.uGridMode	     = GameGridMode::None;
 	m_data.nCellSize		 = 0;
-	m_data.uCountRow		 = 0;
-	m_data.uCountColumn		 = 0;
+	m_data.nCountRow		 = 0;
+	m_data.nCountColumn		 = 0;
 
-	m_ptOffset		  = { 0, 0 };
+	m_ptOffset		    = { 0, 0 };
 	
-	m_data.p.hWnd	  = NULL;
-	m_data.p.hDC	  = NULL;
-	m_data.p.rc		  = { 0, 0, 0, 0 };
+	m_data.p.hWnd	    = nullptr;
+	m_data.p.hDC	    = nullptr;
+	m_data.p.rc		    = { 0, 0, 0, 0 };
 	m_data.brush.cell   = CreateSolidBrush(RGB(0, 0, 0));
 	m_data.brush.bkg    = CreateSolidBrush(RGB(255, 255, 255));
 
 	InitializeCriticalSection(&m_data.thread.critsection);
 }
 
-CGame::~CGame()
-{
+CGame::~CGame() {
 	Stop();
 	ReleaseBuffer();
 	DeleteObject(m_data.brush.bkg);
@@ -50,7 +51,7 @@ CGame::~CGame()
 
 HDC CreateBuffer(HDC hWindowDC, HFONT hFont, int cx, int cy) {
 	HDC hBufferDC = CreateCompatibleDC(hWindowDC);
-	HBITMAP hBitmap = (HBITMAP)CreateCompatibleBitmap(hWindowDC, cx, cy);
+	HBITMAP hBitmap = CreateCompatibleBitmap(hWindowDC, cx, cy);
 	DeleteObject(SelectObject(hBufferDC, hBitmap));
 	DeleteObject(SelectObject(hBufferDC, hFont));
 	return hBufferDC;
@@ -58,21 +59,20 @@ HDC CreateBuffer(HDC hWindowDC, HFONT hFont, int cx, int cy) {
 
 void DeleteBuffer(HDC hWindowDC, HDC hBufferDC, int x, int y, int cx, int cy) {
 	BitBlt(hWindowDC, 0, 0, cx, cy, hBufferDC, x, y, SRCCOPY);
-	HBITMAP hBitmap = (HBITMAP)GetCurrentObject(hBufferDC, OBJ_BITMAP);
+	HBITMAP hBitmap = reinterpret_cast<HBITMAP>(GetCurrentObject(hBufferDC, OBJ_BITMAP));
 	DeleteDC(hBufferDC);
 	DeleteObject(hBitmap);
 }
 
-void CGame::Draw(HWND hWnd, HDC hWindowDC)
-{
-	if (m_data.p.hDC)
-	{
+void CGame::Draw(HWND hWnd, HDC hWindowDC) {
+	if (m_data.p.hDC) {
 		RECT rcWindow;
 		GetClientRect(hWnd, &rcWindow);
-		HDC hDC = ::CreateBuffer(hWindowDC, NULL, rcWindow.right, rcWindow.bottom);
+		HDC hDC = ::CreateBuffer(hWindowDC, nullptr, rcWindow.right, rcWindow.bottom);
 
 		FillRect(hDC, &rcWindow, m_data.brush.bkg);
-		BitBlt(hDC, 0, 0, rcWindow.right, rcWindow.bottom, m_data.p.hDC, (int)m_ptOffset.x, (int)m_ptOffset.y, SRCCOPY);
+		BitBlt(hDC, 0, 0, rcWindow.right, rcWindow.bottom, m_data.p.hDC,
+			   static_cast<int>(m_ptOffset.x), static_cast<int>(m_ptOffset.y), SRCCOPY);
 
 		::DeleteBuffer(hWindowDC, hDC, 0, 0, rcWindow.right, rcWindow.bottom);
 	}
@@ -80,18 +80,18 @@ void CGame::Draw(HWND hWnd, HDC hWindowDC)
 
 BOOL CGame::CheckPause() {
 	if (!m_data.thread.bPause) {
-		MessageBox(NULL, L"Установка доступна только на паузе!", L"Warning!", MB_OK);
+		MessageBox(nullptr, L"Установка доступна только на паузе!", L"Предупреждение!", MB_OK);
 		return FALSE;
 	}
 	return TRUE;
 }
 
-void CGame::InvertState(UINT uPos) {
-	if (!CheckPause())
-		return;
-	if (uPos < m_data.uCountColumn*m_data.uCountRow) {
-		m_data.map[uPos] = !m_data.map[uPos];
-		Update(FALSE);
+void CGame::InvertState(int nPos) {
+	if (CheckPause()) {
+		if (nPos >= 0 && nPos < m_data.nCountColumn*m_data.nCountRow) {
+			m_data.map[nPos] = !m_data.map[nPos];
+			Invalidate(FALSE);
+		}
 	}
 }
 
@@ -99,29 +99,27 @@ UINT CGame::Cursor2Pos(LPPOINT lppt) {
 	//OutputDebug(L"mouse: %i;%i\toffset: %.2f;%.2f\trc: %i;%i\n", lppt->x, lppt->y, m_ptOffset.x, m_ptOffset.y, m_data.p.rc.right, m_data.p.rc.bottom);
 	if (!m_data.nCellSize)
 		return 0;
-	int nGrid = (m_data.uGridMode ? GRID_WIDTH : 0);
-	int x = (lppt->x+(int)m_ptOffset.x-OFFSET+nGrid)/(nGrid+m_data.nCellSize);
-	int y = (lppt->y+ (int)m_ptOffset.y-OFFSET+nGrid)/(nGrid+m_data.nCellSize);
-	if ((x < 0 || x >= (int)m_data.uCountColumn) || (y < 0 || y >= (int)m_data.uCountRow))
-		return m_data.uCountColumn*m_data.uCountRow;
-	return UINT(y*m_data.uCountColumn+x);
+	int nGrid = (m_data.uGridMode ? g_nGridWidth : 0);
+	int x = (lppt->x+static_cast<int>(m_ptOffset.x)-g_nOffset+nGrid)/(nGrid+m_data.nCellSize);
+	int y = (lppt->y+static_cast<int>(m_ptOffset.y)-g_nOffset+nGrid)/(nGrid+m_data.nCellSize);
+	if ((x < 0 || x >= m_data.nCountColumn) || (y < 0 || y >= m_data.nCountRow))
+		return m_data.nCountColumn*m_data.nCountRow;
+	return UINT(y*m_data.nCountColumn+x);
 }
 
-void CGame::CalcBufferRect(LPRECT lprc)
-{
+void CGame::CalcBufferRect(LPRECT lprc) {
 	lprc->left   = 0;
 	lprc->top    = 0;
-	lprc->right  = 2*OFFSET+m_data.nCellSize*m_data.uCountColumn+(m_data.uGridMode ? m_data.uCountColumn+1 : 0)*GRID_WIDTH;
-	lprc->bottom = 2*OFFSET+m_data.nCellSize*m_data.uCountRow+(m_data.uGridMode ? m_data.uCountRow+1 : 0)*GRID_WIDTH;
+	lprc->right  = 2*g_nOffset+m_data.nCellSize*m_data.nCountColumn+(m_data.uGridMode ? m_data.nCountColumn+1 : 0)*g_nGridWidth;
+	lprc->bottom = 2*g_nOffset+m_data.nCellSize*m_data.nCountRow+(m_data.uGridMode ? m_data.nCountRow+1 : 0)*g_nGridWidth;
 }
 
 BOOL CGame::UpdateBuffer() {
 	EnterCriticalSection(&m_data.thread.critsection);
 
 	CalcBufferRect(&m_data.p.rc);
-	HBITMAP hBitmap = (HBITMAP)CreateCompatibleBitmap(m_data.p.hDC, m_data.p.rc.right, m_data.p.rc.bottom);
-	if (hBitmap != NULL)
-	{
+	HBITMAP hBitmap = CreateCompatibleBitmap(m_data.p.hDC, m_data.p.rc.right, m_data.p.rc.bottom);
+	if (hBitmap != nullptr) {
 		DeleteObject(SelectObject(m_data.p.hDC, hBitmap));
 
 		UpdateBitmap(&m_data);
@@ -129,11 +127,10 @@ BOOL CGame::UpdateBuffer() {
 	}
 
 	LeaveCriticalSection(&m_data.thread.critsection);
-	return (hBitmap != NULL);
+	return (hBitmap != nullptr);
 }
 
-BOOL CGame::CreateBuffer()
-{
+BOOL CGame::CreateBuffer() {
 	CalcBufferRect(&m_data.p.rc);
 
 	ReleaseBuffer();
@@ -146,74 +143,73 @@ BOOL CGame::CreateBuffer()
 	if (!m_data.p.hDC)
 		return FALSE;
 
-	HBITMAP hBitmap = (HBITMAP)CreateCompatibleBitmap(m_data.p.hDC, m_data.p.rc.right, m_data.p.rc.bottom);
-	if (hBitmap != NULL)
-	{
+	HBITMAP hBitmap = CreateCompatibleBitmap(m_data.p.hDC, m_data.p.rc.right, m_data.p.rc.bottom);
+	if (hBitmap != nullptr) {
 		DeleteObject(SelectObject(m_data.p.hDC, hBitmap));
-		m_data.map = new BOOL[m_data.uCountRow * m_data.uCountColumn]{0};
+		m_data.map = new BOOL[m_data.nCountRow*m_data.nCountColumn]{0};
+		return TRUE;
 	}
 	else
 		ReleaseBuffer();
-	return (hBitmap != NULL);
+	return FALSE;
 }
 
-void CGame::ReleaseBuffer()
-{
-	if (m_data.p.hDC)
-	{
-		HBITMAP hBitmap = (HBITMAP)GetCurrentObject(m_data.p.hDC, OBJ_BITMAP);
+void CGame::ReleaseBuffer() {
+	if (m_data.p.hDC) {
+		HBITMAP hBitmap = reinterpret_cast<HBITMAP>(GetCurrentObject(m_data.p.hDC, OBJ_BITMAP));
 		DeleteDC(m_data.p.hDC);
-		m_data.p.hDC = NULL;
+		m_data.p.hDC = nullptr;
 		DeleteObject(hBitmap);
 	}
 
-	if (m_data.map)
-	{
+	if (m_data.map) {
 		delete[] m_data.map;
 		m_data.map = nullptr;
 	}
 }
 
-BOOL CGame::Init(HWND hWndParent, int sz, UINT cols, UINT rows)
-{
+BOOL CGame::Init(HWND hWndParent, int sz, int cols, int rows) {
 	if (m_data.thread.hThread)
 		return FALSE;
 
 	m_data.nCellSize	 = sz;
-	m_data.uCountColumn  = cols;
-	m_data.uCountRow	 = rows;
-	m_data.p.hWnd   	 = hWndParent;
+	m_data.nCountColumn  = cols;
+	m_data.nCountRow	 = rows;
 	m_data.thread.bPause = TRUE;
+	m_data.p.hWnd   	 = hWndParent;
 	m_data.uGridMode     = GameGridMode::Grid;
 
 	m_ptOffset = { 0, 0 };
 
 	m_data.thread.hThread = CreateThread(nullptr, 0, ThreadProc, &m_data, 0, &m_data.thread.dwThreadID);
-
-	if (!cols || !rows || sz <= 0 || !CreateBuffer()) {
-		MessageBox(NULL, L"Не удалось создать поле заданных размеров!", L"Ошибка", MB_OK);
+	if (!m_data.thread.hThread) {
+		MessageBox(nullptr, L"Ошибка инициализации!", L"Ошибка", MB_OK);
 		return FALSE;
 	}
-	return (m_data.thread.hThread != NULL);
+
+	if (cols <= 0 || rows <= 0 || sz <= 0 || !CreateBuffer()) {
+		MessageBox(nullptr, L"Не удалось создать поле заданных размеров!", L"Ошибка", MB_OK);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 void CGame::Random(float p) {
-	if (!CheckPause())
-		return;
+	if (CheckPause()) {
+		p = 1-p;
 
-	p = 1-p;
-
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<float> dist;
-	for (UINT i = 0; i < m_data.uCountColumn*m_data.uCountRow; i++)
-		m_data.map[i] = (dist(gen) > p);
-	Update(FALSE);
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution<float> dist;
+		for (int i = 0; i < m_data.nCountColumn*m_data.nCountRow; i++)
+			m_data.map[i] = (dist(gen) > p);
+		Invalidate(FALSE);
+	}
 }
 
 void CGame::SetGridMode(UINT uGridMode) {
 	m_data.uGridMode = uGridMode;
-	Update(FALSE);
+	Invalidate(FALSE);
 }
 
 void CGame::SetOffset(int dx, int dy) { 
@@ -228,28 +224,28 @@ void CGame::SetOffset(int dx, int dy) {
 void CGame::SetDelay(int nDelay) { m_data.thread.nDelay = nDelay; }
 void CGame::Pause(BOOL bPause) { m_data.thread.bPause = bPause; }
 void CGame::GetBufferRect(LPRECT lprc) { *lprc = m_data.p.rc; }
-BOOL CGame::IsPause() { return m_data.thread.bPause; }
 UINT CGame::GetGridMode() { return m_data.uGridMode; }
+BOOL CGame::IsPause() { return m_data.thread.bPause; }
 int CGame::GetDelay() { return m_data.thread.nDelay; }
 int CGame::GetCellSize() { return m_data.nCellSize; }
 
 void CGame::SetZoom(int nCellSize, int x, int y) {
-	if (nCellSize <= 0)
-		return;
-	m_data.nCellSize = nCellSize;
+	if (nCellSize > 0) {
+		m_data.nCellSize = nCellSize;
 
-	RECT rcNew, rcWindow;
-	CalcBufferRect(&rcNew);
-	GetClientRect(m_data.p.hWnd, &rcWindow);
-	m_ptOffset.x += (float(rcNew.right-m_data.p.rc.right)*x)/rcWindow.right;
-	m_ptOffset.y += (float(rcNew.bottom-m_data.p.rc.bottom)*y)/rcWindow.bottom;
+		RECT rcNew, rcWindow;
+		CalcBufferRect(&rcNew);
+		GetClientRect(m_data.p.hWnd, &rcWindow);
+		m_ptOffset.x += (float(rcNew.right-m_data.p.rc.right)*x)/rcWindow.right;
+		m_ptOffset.y += (float(rcNew.bottom-m_data.p.rc.bottom)*y)/rcWindow.bottom;
 
-	UpdateBuffer();
+		UpdateBuffer();
+	}
 }
 
 BOOL CGame::Save() {
 	if (!m_data.p.hDC || !m_data.p.hWnd) {
-		MessageBoxW(NULL, L"В данный момент сохранение невозможно!", L"Ошибка", MB_OK);
+		MessageBoxW(nullptr, L"В данный момент сохранение невозможно!", L"Ошибка", MB_OK);
 		return FALSE;
 	}
 
@@ -259,39 +255,34 @@ BOOL CGame::Save() {
 	return (nResult == 0);
 }
 
-void CGame::Stop()
-{
+void CGame::Stop() {
 	if (!m_data.thread.hThread)
 		return;
 
-	int nDelay = m_data.thread.nDelay+100;
+	int nDelay = m_data.thread.nDelay;
 	m_data.thread.nDelay = 0;
-	Sleep(nDelay);
+	Sleep(nDelay+100); // Немного подождем завершения потока
 
 	CloseHandle(m_data.thread.hThread);
-	m_data.thread.hThread = NULL;
+	m_data.thread.hThread = nullptr;
 }
 
 // ========= ========= ========= ========= ========= ========= ========= =========
 
 BOOL IsAlive(THREADDATA* pData, int x, int y) {
-	if ((x < 0 || x >= (int)pData->uCountColumn) ||
-		(y < 0 || y >= (int)pData->uCountRow))
+	if ((x < 0 || x >= pData->nCountColumn) ||
+		(y < 0 || y >= pData->nCountRow))
 		return 0;
-	return pData->map[(y*pData->uCountColumn)+x];
+	return pData->map[(y*pData->nCountColumn)+x];
 }
 
-inline void Step(THREADDATA* pData)
-{
+inline void Step(THREADDATA* pData) {
 	UINT uPos = 0;
 	UINT uCountAlive = 0;
-	BOOL* map = new BOOL[pData->uCountRow*pData->uCountColumn]{0};
-	for (int y = 0; y < (int)pData->uCountRow; y++)
-	{
-		for (int x = 0; x < (int)pData->uCountColumn; x++)
-		{
-			if (pData->thread.nDelay < 1 || pData->thread.bPause)
-			{
+	BOOL* map = new BOOL[pData->nCountRow*pData->nCountColumn]{0};
+	for (int y = 0; y < pData->nCountRow; y++) {
+		for (int x = 0; x < pData->nCountColumn; x++) {
+			if (pData->thread.nDelay < 1 || pData->thread.bPause) {
 				delete[] map;
 				return;
 			}
@@ -313,58 +304,48 @@ inline void Step(THREADDATA* pData)
 	pData->map = map;
 }
 
-inline void UpdateBitmap(THREADDATA* pData)
-{
-	if (pData->p.hDC == NULL || pData->nCellSize <= 0)
+void UpdateBitmap(THREADDATA* pData) {
+	if (!pData->p.hDC || pData->nCellSize <= 0)
 		return;
 
 	UINT uPos = 0;
-	UINT uOffset = pData->nCellSize + (pData->uGridMode ? GRID_WIDTH : 0);
-	RECT rcCell = { OFFSET, OFFSET, OFFSET+(LONG)pData->nCellSize, OFFSET+(LONG)pData->nCellSize };
+	int nOffset = pData->nCellSize + (pData->uGridMode ? g_nGridWidth : 0);
+	RECT rcCell = { g_nOffset, g_nOffset, g_nOffset+pData->nCellSize, g_nOffset+pData->nCellSize };
 	FillRect(pData->p.hDC, &pData->p.rc, pData->brush.bkg);
 	
-	if (pData->uGridMode == GameGridMode::Grid) {
-		for (UINT x = 0; x <= pData->uCountColumn; x++) {
-			MoveToEx(pData->p.hDC, OFFSET+x*(pData->nCellSize+GRID_WIDTH)-1, OFFSET-1, nullptr);
-			LineTo(pData->p.hDC, OFFSET+x*(pData->nCellSize+GRID_WIDTH)-1, pData->p.rc.bottom-OFFSET-1);
+	if (pData->uGridMode == GameGridMode::Grid) {// Отрисовка сетки
+		for (int x = 0; x <= pData->nCountColumn; x++) {
+			MoveToEx(pData->p.hDC, g_nOffset+x*(pData->nCellSize+g_nGridWidth)-1, g_nOffset-1, nullptr);
+			LineTo(pData->p.hDC, g_nOffset+x*(pData->nCellSize+g_nGridWidth)-1, pData->p.rc.bottom-g_nOffset-1);
 		}
-		for (UINT y = 0; y <= pData->uCountRow; y++) {
-			MoveToEx(pData->p.hDC, OFFSET-1, OFFSET+y*(pData->nCellSize+GRID_WIDTH)-1, nullptr);
-			LineTo(pData->p.hDC, pData->p.rc.right-OFFSET-1, OFFSET+y*(pData->nCellSize+GRID_WIDTH)-1);
+		for (int y = 0; y <= pData->nCountRow; y++) {
+			MoveToEx(pData->p.hDC, g_nOffset-1, g_nOffset+y*(pData->nCellSize+g_nGridWidth)-1, nullptr);
+			LineTo(pData->p.hDC, pData->p.rc.right-g_nOffset-1, g_nOffset+y*(pData->nCellSize+g_nGridWidth)-1);
 		}
 	}
 
-	for (UINT y = 0; y < pData->uCountRow; y++)
-	{
-		for (UINT x = 0; x < pData->uCountColumn; x++)
-		{
+	for (int y = 0; y < pData->nCountRow; y++) {// Отрисовка ячеек
+		for (int x = 0; x < pData->nCountColumn; x++) {
 			if (pData->thread.nDelay < 1)
 				return;
 
 			if (pData->map[uPos])
-			{
-				if (pData->nCellSize == 1)
-					SetPixel(pData->p.hDC, rcCell.left, rcCell.top, 0 /*Black*/);
-				else
-					FillRect(pData->p.hDC, &rcCell, pData->brush.cell);
-			}
-			rcCell.right += uOffset;
-			rcCell.left  += uOffset;
+				FillRect(pData->p.hDC, &rcCell, pData->brush.cell);
+			rcCell.right += nOffset;
+			rcCell.left  += nOffset;
 			uPos++;
 		}
-		rcCell.bottom += uOffset;
-		rcCell.top	  += uOffset;
-		rcCell.left    = OFFSET;
-		rcCell.right   = OFFSET+(LONG)pData->nCellSize;
+		rcCell.bottom += nOffset;
+		rcCell.top	  += nOffset;	// Смещение к следующей ячейке
+		rcCell.left    = g_nOffset; // Смещение от границ окна
+		rcCell.right   = g_nOffset+(LONG)pData->nCellSize;
 	}
 }
 
-DWORD WINAPI ThreadProc(LPVOID lpParam)
-{
+DWORD WINAPI ThreadProc(LPVOID lpParam) {
 	THREADDATA* pData = (THREADDATA*)lpParam;
 	pData->thread.nDelay = 200;
-	while (pData->thread.nDelay > 0)
-	{
+	while (pData->thread.nDelay > 0) {
 		if (pData->thread.bPause) {
 			Sleep(100);
 			continue;
@@ -381,6 +362,6 @@ DWORD WINAPI ThreadProc(LPVOID lpParam)
 
 		Sleep(pData->thread.nDelay);
 	}
-	MessageBox(NULL, L"Shutdown...", L"Exit", MB_OK);
+	MessageBox(nullptr, L"Shutdown...", L"Exit", MB_OK);
 	return 0;
 }

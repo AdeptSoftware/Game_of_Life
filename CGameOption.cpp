@@ -2,28 +2,33 @@
 #include "CGameOption.h"
 #pragma warning(disable:6054)
 
-#define X			 5
-#define Y			 5
-#define SPACE		 3	
-#define W			50
-#define H			20
+// Константы отображения элементов управления (ЭУ)
+const int g_gap	= 3;	// Зазор между ЭУ
+const int g_w	= 50;
+const int g_h	= 20;
+const int g_x	= 5;	// Расположение первого ЭУ по оси X
+const int g_y	= 5;	// Расположение первого ЭУ по оси Y
 
-HFONT MakeFont(LPCWSTR Typeface, int nSize, BOOL bBold, BOOL bItalic) {
-	// Узнаем, сколько пикселей в одном логическом дюйме
-	int pixelsPerInch = GetDeviceCaps(GetDC(NULL), LOGPIXELSY);
-	// Узнаем высоту в пикселях шрифта размером Size пунктов
-	int fontHeight = -MulDiv(nSize, pixelsPerInch, 72);
-	return CreateFont(fontHeight, 0, 0, 0, (bBold ? FW_BOLD : FW_NORMAL), bItalic, 0, 0,
-		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-		CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
-		DEFAULT_PITCH | FF_DONTCARE, Typeface);
+HFONT MakeFont(LPCWSTR szTypeface, int nSize, BOOL bBold, BOOL bItalic) {
+	HDC hDC = GetDC(nullptr);
+	if (hDC) {
+		// Узнаем, сколько пикселей в одном логическом дюйме
+		int pixelsPerInch = GetDeviceCaps(GetDC(NULL), LOGPIXELSY);
+		ReleaseDC(nullptr, hDC);
+		// Узнаем высоту в пикселях шрифта размером Size пунктов
+		int nFontHeight = -MulDiv(nSize, pixelsPerInch, 72);
+		return CreateFont(nFontHeight, 0, 0, 0, (bBold ? FW_BOLD : FW_NORMAL), bItalic, 0, 0,
+						  DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY,
+						  DEFAULT_PITCH | FF_DONTCARE, szTypeface);
+	}
+	return nullptr;
 }
 
 CGameOption::CGameOption() {
-	m_hEditWndWidth  = NULL;
-	m_hEditWndHeight = NULL;
-	m_hEditCellSize  = NULL;
-	m_hButtonNext	 = NULL;
+	m_hEditWndWidth  = nullptr;
+	m_hEditWndHeight = nullptr;
+	m_hEditCellSize  = nullptr;
+	m_hButtonStart	 = nullptr;
 	m_hFont = MakeFont(L"Consolas", 10, FALSE, FALSE);
 }
 
@@ -32,41 +37,44 @@ CGameOption::~CGameOption() {
 		DeleteObject(m_hFont);
 }
 
+// Установка размеров окна по размеру всех ЭУ
 void CGameOption::UpdateWindowPos(HWND hWndParent) {
 	RECT rcDesktop;
-	int w = 2*X+3*SPACE+5*W+15;
-	int h = 2*Y+H+36;
+	int w = 2*g_x+3*g_gap+5*g_w+15;
+	int h = 2*g_y+g_h+36;
 	GetClientRect(GetDesktopWindow(), &rcDesktop);
-	SetWindowPos(hWndParent, NULL, (rcDesktop.right-w)/2, (rcDesktop.bottom-h)/2, w, h, SWP_NOZORDER);
+	SetWindowPos(hWndParent, nullptr, (rcDesktop.right-w)/2, (rcDesktop.bottom-h)/2, w, h, SWP_NOZORDER);
 }
 
 BOOL CGameOption::CreateControls(HINSTANCE hInst, HWND hWndParent) {
 	DWORD dwStyle = ES_CENTER | ES_NUMBER | WS_BORDER | WS_CHILD | WS_TABSTOP | WS_VISIBLE;
-	m_hEditWndWidth  = CreateWindowW(L"Edit", L"675", dwStyle, X, Y, W, H, hWndParent, NULL, hInst, NULL);
-	m_hEditWndHeight = CreateWindowW(L"Edit", L"360", dwStyle, X+W+SPACE, Y, W, H, hWndParent, NULL, hInst, NULL);
-	m_hEditCellSize  = CreateWindowW(L"Edit", L"1",  dwStyle, X + 2 * (W + SPACE), Y, W, H, hWndParent, NULL, hInst, NULL);
+	m_hEditWndWidth  = CreateWindowW(L"Edit", L"50", dwStyle, g_x,				 g_y, g_w,   g_h, hWndParent, nullptr, hInst, nullptr);
+	m_hEditWndHeight = CreateWindowW(L"Edit", L"50", dwStyle, g_x+g_w+g_gap,	 g_y, g_w,   g_h, hWndParent, nullptr, hInst, nullptr);
+	m_hEditCellSize  = CreateWindowW(L"Edit", L"5",  dwStyle, g_x+2*(g_w+g_gap), g_y, g_w,   g_h, hWndParent, nullptr, hInst, nullptr);
 
+	HMENU hCtrlID = reinterpret_cast<HMENU>(IDC_BUTTON_START);
 	dwStyle = BS_CENTER | BS_PUSHBUTTON | WS_BORDER | WS_CHILD | WS_TABSTOP | WS_VISIBLE;
-	m_hButtonNext = CreateWindowW(L"Button", L"Next", dwStyle, X+3*(W+SPACE), Y, W*2, H, hWndParent, (HMENU)IDC_BUTTON_NEXT, hInst, NULL);
-	if (m_hButtonNext && m_hEditCellSize && m_hEditWndHeight && m_hEditWndWidth) {
-		SendMessageW(m_hEditWndWidth, WM_SETFONT, (WPARAM)m_hFont, FALSE);
-		SendMessageW(m_hEditWndHeight, WM_SETFONT, (WPARAM)m_hFont, FALSE);
-		SendMessageW(m_hEditCellSize, WM_SETFONT, (WPARAM)m_hFont, FALSE);
-		SendMessageW(m_hButtonNext, WM_SETFONT, (WPARAM)m_hFont, FALSE);
+	m_hButtonStart = CreateWindowW(L"Button", L"OK", dwStyle, g_x+3*(g_w+g_gap), g_y, g_w*2, g_h, hWndParent, hCtrlID, hInst, nullptr);
+	if (m_hButtonStart && m_hEditCellSize && m_hEditWndHeight && m_hEditWndWidth) {
+		WPARAM wp = reinterpret_cast<WPARAM>(m_hFont);
+		SendMessageW(m_hEditWndHeight, WM_SETFONT, wp, FALSE);
+		SendMessageW(m_hEditWndWidth,  WM_SETFONT, wp, FALSE);
+		SendMessageW(m_hEditCellSize,  WM_SETFONT, wp, FALSE);
+		SendMessageW(m_hButtonStart,   WM_SETFONT, wp, FALSE);
 		return TRUE;
 	}
 	return FALSE;
 }
 
 void CGameOption::Show(int nCmdShow) {
-	ShowWindow(m_hEditWndWidth, nCmdShow);
 	ShowWindow(m_hEditWndHeight, nCmdShow);
-	ShowWindow(m_hEditCellSize, nCmdShow);
-	ShowWindow(m_hButtonNext, nCmdShow);
+	ShowWindow(m_hEditWndWidth,  nCmdShow);
+	ShowWindow(m_hEditCellSize,  nCmdShow);
+	ShowWindow(m_hButtonStart,   nCmdShow);
 }
 
 BOOL CGameOption::IsHide() {
-	return !IsWindowVisible(m_hButtonNext);
+	return !IsWindowVisible(m_hButtonStart);
 }
 
 int GetNumber(HWND hEdit) {
@@ -75,14 +83,14 @@ int GetNumber(HWND hEdit) {
 	return _wtoi(szText);
 }
 
-UINT CGameOption::GetWindowWidth() {
-	return (UINT)GetNumber(m_hEditWndWidth);
+int CGameOption::GetWindowWidth() {
+	return GetNumber(m_hEditWndWidth);
 }
 
-UINT CGameOption::GetWindowHeight() {
-	return (UINT)GetNumber(m_hEditWndHeight);
+int CGameOption::GetWindowHeight() {
+	return GetNumber(m_hEditWndHeight);
 }
 
-UINT CGameOption::GetCellSize() {
-	return (UINT)GetNumber(m_hEditCellSize);
+int CGameOption::GetCellSize() {
+	return GetNumber(m_hEditCellSize);
 }

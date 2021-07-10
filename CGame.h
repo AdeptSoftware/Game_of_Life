@@ -4,7 +4,8 @@
 enum GameGridMode : UINT {
 	None,			// Без сетки
 	Gap,			// Щель между ячейками
-	Grid			// Обычная сетка
+	Grid,			// Обычная сетка
+	EnumCount		// Нужен для определения кол-ва доступных вариантов сетки
 };
 
 struct POINTF {
@@ -31,8 +32,8 @@ struct THREADDATA
 	} brush;
 
 	int  nCellSize;
-	UINT uCountRow;
-	UINT uCountColumn;
+	int  nCountRow;
+	int  nCountColumn;
 	UINT uGridMode;
 
 	struct BUFFER
@@ -51,9 +52,9 @@ public:
 	CGame();
 	~CGame();
 
-	BOOL UpdateBuffer();
+	BOOL UpdateBuffer();			// Обновление размер буффера (Bitmap'а)
 	
-	BOOL Init(HWND hWndParent, int sz, UINT cols, UINT rows);
+	BOOL Init(HWND hWndParent, int sz, int cols, int rows);
 
 	void Pause(BOOL bPause = TRUE);
 	void Stop();
@@ -74,22 +75,21 @@ public:
 
 	void Draw(HWND hWnd, HDC hDC);
 
-	void InvertState(UINT uPos);
+	void InvertState(int nPos);		// Изменяет состояние ячейки
 	UINT Cursor2Pos(LPPOINT lppt);
 
-	// Случайно заполнить поле
-	void Random(float p = 0.3f);
+	void Random(float p = 0.3f); 	// Случайно заполнить поле
 
-	BOOL Save();
+	BOOL Save();					// Сохранение текущего Bitmap'а в файл
 
 private:
 	THREADDATA m_data;
 	POINTF m_ptOffset;
 
-	BOOL CreateBuffer();
+	BOOL CreateBuffer();			// Создание двойного буфера
 	void ReleaseBuffer();
 
 	BOOL CheckPause();
-	void Update(BOOL bErase);
+	void Invalidate(BOOL bErase);	// Перерисовка
 };
 

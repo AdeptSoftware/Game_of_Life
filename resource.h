@@ -4,11 +4,9 @@
 //
 #define IDC_MYICON                      2
 #define IDD_LIFE_DIALOG                 102
-#define IDS_APP_TITLE                   103
-#define IDS_WND_CLASS_MAIN              104
 #define IDI_LIFE                        107
 #define IDI_SMALL                       108
-#define IDC_BUTTON_NEXT                 127
+#define IDC_BUTTON_START                 127
 #define IDR_MAINFRAME                   128
 #define IDC_ACCEL                       129
 #define IDR_GAME_ACCEL                  130
